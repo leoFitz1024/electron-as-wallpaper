@@ -1,6 +1,6 @@
 {
-  "name": "electron-as-wallpaper",
-  "version": "1.0.3",
+  "name": "@xchencode/electron-as-wallpaper",
+  "version": "1.0.0",
   "author": {
     "name": "meslzy",
     "email": "i@meslzy.com",

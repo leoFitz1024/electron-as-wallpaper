@@ -4,6 +4,7 @@
 #include <windows.h>
 #include <winuser.h>
 #include <hidusage.h>
+#include <tlhelp32.h>
 
 using namespace Napi;
 
@@ -232,7 +233,88 @@ void stopForwardingRawInput() {
   rawInputWindowHandle = nullptr;
 }
 
-//
+// get os version
+int getOsVersion()
+{
+    int osVersion = -1;
+    typedef void(__stdcall* NTPROC)(DWORD*, DWORD*, DWORD*);
+    HINSTANCE ntdll = GetModuleHandleA("ntdll.dll");
+
+    NTPROC GetNtVersionNumbers = (NTPROC)
+        GetProcAddress(ntdll, "RtlGetNtVersionNumbers");
+    if (!ntdll || !GetNtVersionNumbers) {
+        return 0;
+    }
+
+    DWORD dwMajor, dwMinor, dwBuildNumber;
+    GetNtVersionNumbers(&dwMajor, &dwMinor, &dwBuildNumber);
+
+    switch (dwMajor) {
+        case 6:
+            if (dwMinor == 0) { // Vista
+              osVersion = 0;
+            } else if (dwMinor == 1) {  // Win 7
+              osVersion = 2;
+            } else if (dwMinor == 2) {  // Win 8
+              osVersion = 3;
+            } else if (dwMinor == 3) {  // Win 8.1
+              osVersion = 4;
+            }
+            break;
+        case 10:
+            osVersion = 5; // Win 10, 11
+            break;
+        default:
+            if(dwMajor <= 5)  // Win XP
+                osVersion = 1;
+            else
+                osVersion = 6; //  Future
+            break;
+    }
+    return osVersion;
+}
+
+// try to enable DWM composition
+bool enableDwmComposition() {
+
+    BOOL bEnabled = FALSE;
+    typedef HRESULT(__stdcall* fnDwmIsCompositionEnabled)(BOOL* pfEnabled);
+    typedef HRESULT(__stdcall* fnDwmEnableComposition)(UINT uCompositionAction);
+
+    HMODULE hModuleDwm = LoadLibraryA("dwmapi.dll");
+    if (hModuleDwm != 0){
+        auto pFuncIsEnabled =
+            (fnDwmIsCompositionEnabled)GetProcAddress(
+                hModuleDwm, "DwmIsCompositionEnabled");
+        auto pFuncEnableDwm =
+            (fnDwmEnableComposition)GetProcAddress(
+            hModuleDwm, "DwmEnableComposition");
+
+        if (pFuncIsEnabled != 0){
+            BOOL result = FALSE;
+            if (pFuncIsEnabled(&result) == S_OK){
+                if(result == TRUE)
+                    bEnabled = TRUE;
+                else if (pFuncEnableDwm != 0){
+                    printf("Dwm off, Attempt to start Dwm Service.\n");
+                    system("SC start UxSms");
+                    WaitForSingleObject(GetCurrentProcess(), 500);
+                    if (pFuncEnableDwm(TRUE) == S_OK) {
+                        bEnabled = TRUE;
+                    } else {
+                        SetLastError(ERROR_INTERNAL_ERROR);
+                    }
+                }
+            }
+        } else {
+            SetLastError(ERROR_ACCESS_DENIED);
+            bEnabled = TRUE;
+        }
+        FreeLibrary(hModuleDwm);
+        hModuleDwm = 0;
+    }
+    return bEnabled;
+}
 
 void attach(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
@@ -247,7 +329,23 @@ void attach(const Napi::CallbackInfo &info) {
   auto forwardMouseInput = options.Get("forwardMouseInput").As<Napi::Boolean>();
   auto forwardKeyboardInput = options.Get("forwardKeyboardInput").As<Napi::Boolean>();
 
+  auto osVersion = getOsVersion();
+
+  if (osVersion <= 1){
+    Napi::TypeError::New(env, "Unsupported os version").ThrowAsJavaScriptException();
+    return;
+  }
+
+  if (osVersion == 2) {
+    if (enableDwmComposition() == FALSE) {
+      Napi::TypeError::New(env, "DWM was disabled").ThrowAsJavaScriptException();
+      return;
+    }
+  }
+
   auto shellHandle = GetShellWindow();
+
+  HWND hProgman = FindWindow("Progman", 0);
 
   SendMessage(shellHandle, 0x052C, 0x0000000D, 0);
   SendMessage(shellHandle, 0x052C, 0x0000000D, 1);
@@ -269,6 +367,11 @@ void attach(const Napi::CallbackInfo &info) {
     return;
   }
 
+  if (hProgman == nullptr) {
+    Napi::TypeError::New(env, "couldn't locate Program Manager").ThrowAsJavaScriptException();
+    return;
+  }
+
   Window window = {
       windowHandle,
       transparent,
@@ -276,7 +379,12 @@ void attach(const Napi::CallbackInfo &info) {
       forwardKeyboardInput
   };
 
-  SetParent(windowHandle, workerW);
+  if (osVersion >= 4){
+    SetParent(windowHandle, workerW);
+  }else{
+    ShowWindow(workerW, SW_HIDE);
+    SetParent(windowHandle, hProgman);
+  }
 
   if (transparent) {
     makeWindowTransparent(windowHandle, true);

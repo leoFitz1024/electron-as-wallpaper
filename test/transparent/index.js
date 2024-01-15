@@ -1,5 +1,6 @@
-const { app, BrowserWindow } = require("electron");
+const { app, BrowserWindow, screen} = require("electron");
 const { attach } = require("../../dist/index");
+const {getBoundXOffset} = require("../utils");
 
 app.on("ready", async () => {
   const win = new BrowserWindow({
@@ -13,6 +14,14 @@ app.on("ready", async () => {
   });
 
   await win.loadURL(`file://${ __dirname }/index.html`);
+  const boundXOffset = getBoundXOffset(screen.getAllDisplays());
+  const displayBound = screen.getPrimaryDisplay().bounds;
+
+  win.setBounds({
+
+    x: displayBound.x + boundXOffset.offsetX,
+    y: displayBound.y + boundXOffset.offsetY,
+  });
 
   win.webContents.openDevTools({
     mode: "detach",

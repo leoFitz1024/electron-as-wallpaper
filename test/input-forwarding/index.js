@@ -1,5 +1,6 @@
 const {app, BrowserWindow, screen} = require("electron");
 const {attach, detach} = require("../../dist/index");
+const {getBoundXOffset} = require("../utils");
 
 app.on("ready", async () => {
   const win = new BrowserWindow({
@@ -9,16 +10,17 @@ app.on("ready", async () => {
     frame: false,
   });
 
-  const size = screen.getPrimaryDisplay().size;
+  const boundXOffset = getBoundXOffset(screen.getAllDisplays());
+  const displayBound = screen.getPrimaryDisplay().bounds;
 
   win.setBounds({
-    x: 0,
-    y: 200,
-    width: size.width,
-    height: size.height - 200,
+    width: displayBound.width,
+    height: displayBound.height,
+    x: displayBound.x + boundXOffset.offsetX,
+    y: displayBound.y + boundXOffset.offsetY,
   });
 
-  await win.loadURL("https://www.google.com/");
+  await win.loadURL("https://www.baidu.com/");
 
   win.webContents.openDevTools({
     mode: "detach",
@@ -32,7 +34,7 @@ app.on("ready", async () => {
 
   win.show();
 
-  setTimeout(() => {
-    detach(win);
-  }, 10000);
+  // setTimeout(() => {
+  //   detach(win);
+  // }, 10000);
 });
