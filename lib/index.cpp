@@ -379,6 +379,15 @@ void attach(const Napi::CallbackInfo &info) {
       forwardKeyboardInput
   };
 
+  // 获取当前窗口样式
+  LONG_PTR style = GetWindowLongPtr(windowHandle, GWL_STYLE);
+
+  // 去除指定的样式，比如 WS_BORDER
+  style &= ~WS_CAPTION;
+
+  // 使用 SetWindowLongPtr 设置新的样式
+  SetWindowLongPtr(windowHandle, GWL_STYLE, style);
+
   if (osVersion >= 4){
     SetParent(windowHandle, workerW);
   }else{
