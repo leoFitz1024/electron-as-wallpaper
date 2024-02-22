@@ -5,13 +5,14 @@
 #include <winuser.h>
 #include <hidusage.h>
 #include <tlhelp32.h>
+#include <iostream>
 
 using namespace Napi;
 
 struct Window {
   HWND handle;
   bool transparent;
-  bool forwardMouseInput;
+  bool forwardMouseMove;
   bool forwardMouseClick;
   bool forwardKeyboardInput;
 };
@@ -29,7 +30,6 @@ void makeWindowTransparent(HWND windowHandle, bool active) {
 
 //
 bool isDesktopActive() {
-  return true;
   HWND foreground = GetForegroundWindow();
   HWND desktop = GetDesktopWindow();
   HWND shell = GetShellWindow();
@@ -71,17 +71,20 @@ void postMouseMessage(UINT uMsg, WPARAM wParam, POINT point) {
   }
 
   for (auto &window: windows) {
-    if (window.forwardMouseInput) {
-      ScreenToClient(window.handle, &point);
-
-      auto lParam = static_cast<std::uint32_t>(point.y);
-      lParam <<= 16;
-      lParam |= static_cast<std::uint32_t>(point.x);
-      if (uMsg != WM_MOUSEMOVE){
-        if (window.forwardMouseClick){
-          PostMessage(window.handle, uMsg, wParam, lParam);
-        }
-      }else{
+    if (uMsg != WM_MOUSEMOVE){
+      if (window.forwardMouseClick){
+        ScreenToClient(window.handle, &point);
+        auto lParam = static_cast<std::uint32_t>(point.y);
+        lParam <<= 16;
+        lParam |= static_cast<std::uint32_t>(point.x);
+        PostMessage(window.handle, uMsg, wParam, lParam);
+      }
+    }else{
+      if (window.forwardMouseMove){
+        ScreenToClient(window.handle, &point);
+        auto lParam = static_cast<std::uint32_t>(point.y);
+        lParam <<= 16;
+        lParam |= static_cast<std::uint32_t>(point.x);
         PostMessage(window.handle, uMsg, wParam, lParam);
       }
     }
@@ -335,7 +338,7 @@ void attach(const Napi::CallbackInfo &info) {
   auto options = info[1].As<Napi::Object>();
 
   auto transparent = options.Get("transparent").As<Napi::Boolean>();
-  auto forwardMouseInput = options.Get("forwardMouseInput").As<Napi::Boolean>();
+  auto forwardMouseMove = options.Get("forwardMouseMove").As<Napi::Boolean>();
   auto forwardMouseClick = options.Get("forwardMouseClick").As<Napi::Boolean>();
   auto forwardKeyboardInput = options.Get("forwardKeyboardInput").As<Napi::Boolean>();
 
@@ -385,7 +388,7 @@ void attach(const Napi::CallbackInfo &info) {
   Window window = {
       windowHandle,
       transparent,
-      forwardMouseInput,
+      forwardMouseMove,
       forwardMouseClick,
       forwardKeyboardInput
   };

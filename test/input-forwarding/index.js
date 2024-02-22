@@ -6,7 +6,7 @@ const {refresh} = require("../../dist");
 app.on("ready", async () => {
   const [display1, display2] = screen.getAllDisplays()
   const boundXOffset = getBoundXOffset(screen.getAllDisplays());
-  const displayBound = display1.bounds;
+  const displayBound = display2.bounds;
 
   console.log(display1.bounds)
   console.log(display2.bounds)
@@ -35,8 +35,8 @@ app.on("ready", async () => {
   attach(win, {
     // transparent: true,
     forwardKeyboardInput: false,
-    forwardMouseInput: true,
-    forwardMouseClick: false,
+    forwardMouseMove: true,
+    forwardMouseClick: true,
   });
 
   win.setBounds({
