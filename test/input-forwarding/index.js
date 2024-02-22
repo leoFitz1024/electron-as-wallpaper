@@ -13,6 +13,7 @@ app.on("ready", async () => {
   const win = new BrowserWindow({
     autoHideMenuBar: true,
     roundedCorners: false,
+    focusable: false,
     frame: false,
     show: false,
     width: displayBound.width,
@@ -34,7 +35,8 @@ app.on("ready", async () => {
   attach(win, {
     // transparent: true,
     forwardKeyboardInput: false,
-    forwardMouseInput: false,
+    forwardMouseInput: true,
+    forwardMouseClick: false,
   });
 
   win.setBounds({

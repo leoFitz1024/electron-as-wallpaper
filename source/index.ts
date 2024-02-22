@@ -14,6 +14,12 @@ interface AttachOptions {
    * Forward mouse input-forwarding to the window.
    */
   forwardMouseInput?: boolean;
+
+  /**
+   * Forward mouse click event-forwarding to the window.
+   */
+  forwardMouseClick?: boolean;
+
   /**
    * Forward keyboard input-forwarding to the window.
    */
@@ -23,6 +29,7 @@ interface AttachOptions {
 const attachOptions: AttachOptions = {
   transparent: false,
   forwardMouseInput: false,
+  forwardMouseClick: false,
   forwardKeyboardInput: false,
 };
 

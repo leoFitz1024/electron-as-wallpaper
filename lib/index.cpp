@@ -12,6 +12,7 @@ struct Window {
   HWND handle;
   bool transparent;
   bool forwardMouseInput;
+  bool forwardMouseClick;
   bool forwardKeyboardInput;
 };
 
@@ -27,12 +28,13 @@ void makeWindowTransparent(HWND windowHandle, bool active) {
 }
 
 //
-
 bool isDesktopActive() {
+  return true;
   HWND foreground = GetForegroundWindow();
   HWND desktop = GetDesktopWindow();
   HWND shell = GetShellWindow();
 
+  HWND foregroundParent = GetAncestor(foreground, GA_PARENT);
 
   HWND desktopWorkerW = FindWindowEx(nullptr, nullptr, "WorkerW", nullptr);
 
@@ -50,7 +52,9 @@ bool isDesktopActive() {
 
   if (foreground == desktop) {
     return true;
-  } else if (foreground == shell) {
+  } else if (foregroundParent == desktopWorkerW){
+    return true;
+  }else if (foreground == shell) {
     return true;
   } else if (foreground == desktopWorkerW) {
     return true;
@@ -73,8 +77,13 @@ void postMouseMessage(UINT uMsg, WPARAM wParam, POINT point) {
       auto lParam = static_cast<std::uint32_t>(point.y);
       lParam <<= 16;
       lParam |= static_cast<std::uint32_t>(point.x);
-
-      PostMessage(window.handle, uMsg, wParam, lParam);
+      if (uMsg != WM_MOUSEMOVE){
+        if (window.forwardMouseClick){
+          PostMessage(window.handle, uMsg, wParam, lParam);
+        }
+      }else{
+        PostMessage(window.handle, uMsg, wParam, lParam);
+      }
     }
   }
 }
@@ -327,6 +336,7 @@ void attach(const Napi::CallbackInfo &info) {
 
   auto transparent = options.Get("transparent").As<Napi::Boolean>();
   auto forwardMouseInput = options.Get("forwardMouseInput").As<Napi::Boolean>();
+  auto forwardMouseClick = options.Get("forwardMouseClick").As<Napi::Boolean>();
   auto forwardKeyboardInput = options.Get("forwardKeyboardInput").As<Napi::Boolean>();
 
   auto osVersion = getOsVersion();
@@ -376,6 +386,7 @@ void attach(const Napi::CallbackInfo &info) {
       windowHandle,
       transparent,
       forwardMouseInput,
+      forwardMouseClick,
       forwardKeyboardInput
   };
 
