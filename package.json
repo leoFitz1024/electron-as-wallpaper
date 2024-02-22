@@ -2,16 +2,16 @@
   "name": "@xchencode/electron-as-wallpaper",
   "version": "1.0.2",
   "author": {
-    "name": "meslzy",
-    "email": "i@meslzy.com",
-    "url": "https://meslzy.com/"
+    "name": "leoplodfitz",
+    "email": "leoplodfitz@gmail.com",
+    "url": "https://github.com/leoFitz1024"
   },
   "description": "set your electron window as wallpaper behind desktop icons",
-  "repository": "github:meslzy/electron-as-wallpaper",
+  "repository": "github:leoFitz1024/electron-as-wallpaper",
   "bugs": {
-    "url": "https://github.com/meslzy/electron-as-wallpaper/issues"
+    "url": "https://github.com/leoFitz1024/electron-as-wallpaper/issues"
   },
-  "homepage": "https://github.com/meslzy/electron-as-wallpaper#readme",
+  "homepage": "https://github.com/leoFitz1024/electron-as-wallpaper#readme",
   "publishConfig": {
     "access": "public"
   },
