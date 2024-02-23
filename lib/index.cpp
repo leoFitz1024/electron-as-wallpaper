@@ -5,7 +5,7 @@
 #include <winuser.h>
 #include <hidusage.h>
 #include <tlhelp32.h>
-#include <iostream>
+//#include <iostream>
 
 using namespace Napi;
 
@@ -385,13 +385,6 @@ void attach(const Napi::CallbackInfo &info) {
     return;
   }
 
-  Window window = {
-      windowHandle,
-      transparent,
-      forwardMouseMove,
-      forwardMouseClick,
-      forwardKeyboardInput
-  };
 
   // 获取当前窗口样式
   LONG_PTR style = GetWindowLongPtr(windowHandle, GWL_STYLE);
@@ -413,7 +406,28 @@ void attach(const Napi::CallbackInfo &info) {
     makeWindowTransparent(windowHandle, true);
   }
 
-  windows.push_back(window);
+  bool newWindow = true;
+  for (auto it = windows.begin(); it != windows.end(); ++it) {
+      if (it->handle == windowHandle) {
+        newWindow = false;
+        it->transparent = transparent;
+        it->forwardMouseMove = forwardMouseMove;
+        it->forwardMouseClick = forwardMouseClick;
+        it->forwardKeyboardInput = forwardKeyboardInput;
+        break;
+      }
+  }
+  if (newWindow){
+      Window window = {
+        windowHandle,
+        transparent,
+        forwardMouseMove,
+        forwardMouseClick,
+        forwardKeyboardInput
+      };
+      windows.push_back(window);
+  }
+//  std::cout << newWindow << std::endl;
 
   if (!windows.empty()) {
     startForwardingRawInput(env);
