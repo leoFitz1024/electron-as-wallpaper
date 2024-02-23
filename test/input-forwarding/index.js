@@ -9,7 +9,47 @@ app.on("ready", async () => {
   const boundXOffset = getBoundXOffset(screen.getAllDisplays());
   const bounds = display2.bounds;
 
-  const win = new BrowserWindow({
+  let win = await createWindow(bounds);
+  // win.webContents.openDevTools({
+  //   mode: "detach",
+  // });
+
+  attach(win, {
+    // transparent: true,
+    forwardKeyboardInput: false,
+    forwardMouseMove: true,
+    forwardMouseClick: true,
+  });
+
+  win.setBounds({
+    width: bounds.width,
+    height: bounds.height,
+    x: bounds.x + boundXOffset.offsetX,
+    y: bounds.y + boundXOffset.offsetY
+  });
+  win.show();
+  console.log("attach success")
+  setTimeout(() =>{
+    detach(win)
+    console.log("detach success")
+    setTimeout(async () => {
+      win = await createWindow(bounds)
+      attach(win, {
+        // transparent: true,
+        forwardKeyboardInput: false,
+        forwardMouseMove: false,
+        forwardMouseClick: false,
+      });
+      console.log("attach 2 success")
+    },3000)
+  },3000)
+  // setTimeout(() => {
+  //   detach(win);
+  // }, 10000);
+});
+
+async function createWindow(bounds) {
+  let browserWindow = new BrowserWindow({
     roundedCorners: false,
     autoHideMenuBar: true,
     frame: false,
@@ -48,39 +88,10 @@ app.on("ready", async () => {
       plugins: false,
       enableWebSQL: false
     }
-  })
+  });
 
   // await win.loadURL("https://blog.csdn.net/weixin_41010198/article/details/88055078");
-  await win.loadFile("C:\\Users\\chen\\AppData\\Roaming\\wallhaven\\wallpaper_temp\\2c249fef-eb86-433b-a180-ae97bf7ec195\\index.html");
 
-  // win.webContents.openDevTools({
-  //   mode: "detach",
-  // });
-
-  attach(win, {
-    // transparent: true,
-    forwardKeyboardInput: false,
-    forwardMouseMove: true,
-    forwardMouseClick: true,
-  });
-
-  win.setBounds({
-    width: bounds.width,
-    height: bounds.height,
-    x: bounds.x + boundXOffset.offsetX,
-    y: bounds.y + boundXOffset.offsetY
-  });
-  win.show();
-  console.log(win.getBounds())
-  setTimeout(() =>{
-    attach(win, {
-      // transparent: true,
-      forwardKeyboardInput: false,
-      forwardMouseMove: false,
-      forwardMouseClick: false,
-    });
-  },30000)
-  // setTimeout(() => {
-  //   detach(win);
-  // }, 10000);
-});
+  await browserWindow.loadFile("../../assets/resources/index.html");
+  return browserWindow;
+}

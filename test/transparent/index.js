@@ -18,7 +18,6 @@ app.on("ready", async () => {
   const displayBound = screen.getPrimaryDisplay().bounds;
 
   win.setBounds({
-
     x: displayBound.x + boundXOffset.offsetX,
     y: displayBound.y + boundXOffset.offsetY,
   });

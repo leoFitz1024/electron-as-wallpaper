@@ -1,0 +1,20 @@
+{
+  "author": "",
+  "categories": "general",
+  "config": {
+    "keyboardEvent": false,
+    "mouseMoveEvent": true,
+    "mouseClickEvent": true
+  },
+  "created_at": 1708668125453,
+  "desc": "交互式元素周期表",
+  "id": "2c249fef-eb86-433b-a180-ae97bf7ec195",
+  "preview": "preview.gif",
+  "purity": "sfw",
+  "tags": [],
+  "thumbnail": "thumbnail.jpg",
+  "title": "元素周期表",
+  "type": 2,
+  "url": "index.html",
+  "absolutePath": false
+}

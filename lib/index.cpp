@@ -5,7 +5,7 @@
 #include <winuser.h>
 #include <hidusage.h>
 #include <tlhelp32.h>
-//#include <iostream>
+#include <iostream>
 
 using namespace Napi;
 
@@ -208,15 +208,19 @@ void startForwardingRawInput(Napi::Env env) {
   wc.hInstance = hInstance;
   wc.lpszClassName = "RawInputWindow";
 
-  if (!RegisterClass(&wc)) {
-    Napi::TypeError::New(env, "Could not register raw input window class").ThrowAsJavaScriptException();
+  //Check if the window class has already been registered.
+  auto classAtom = GetClassInfo(wc.hInstance, wc.lpszClassName, &wc);
+  if (!classAtom && !RegisterClass(&wc)) {
+    DWORD error = GetLastError();
+    Napi::TypeError::New(env, "Could not register raw input window class, error code: " + std::to_string(error)).ThrowAsJavaScriptException();
     return;
   }
 
   rawInputWindowHandle = CreateWindowEx(0, wc.lpszClassName, nullptr, 0, 0, 0, 0, 0, HWND_MESSAGE, nullptr, hInstance, nullptr);
 
   if (!rawInputWindowHandle) {
-    Napi::TypeError::New(env, "Could not create raw input window").ThrowAsJavaScriptException();
+    DWORD error = GetLastError();
+    Napi::TypeError::New(env, "Could not create raw input window, error code: " + std::to_string(error)).ThrowAsJavaScriptException();
   }
 
   RAWINPUTDEVICE rid[2];
@@ -232,7 +236,8 @@ void startForwardingRawInput(Napi::Env env) {
   rid[1].hwndTarget = rawInputWindowHandle;
 
   if (RegisterRawInputDevices(rid, 2, sizeof(rid[0])) == FALSE) {
-    Napi::TypeError::New(env, "Could not register raw input devices").ThrowAsJavaScriptException();
+    DWORD error = GetLastError();
+    Napi::TypeError::New(env, "Could not register raw input devices, error code: " + std::to_string(error)).ThrowAsJavaScriptException();
   }
 }
 
@@ -427,7 +432,6 @@ void attach(const Napi::CallbackInfo &info) {
       };
       windows.push_back(window);
   }
-//  std::cout << newWindow << std::endl;
 
   if (!windows.empty()) {
     startForwardingRawInput(env);
@@ -454,7 +458,6 @@ void detach(const Napi::CallbackInfo &info) {
 
     windows.erase(window);
   }
-
   if (windows.empty()) {
     stopForwardingRawInput();
   }
